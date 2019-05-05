@@ -97,4 +97,7 @@ if __name__ == "__main__":
     igs_sorted = igs[id_sorted]
     k = 10
     vocab = np.array(vocab)
+    top_split_id = 4185
+    print(f"top previous word: {vocab[top_split_id]},", 
+          f"{information_gain(np.array(X_train.todense())[:, top_split_id], y_train)}")
     print("\n".join(map(lambda x: f"{x[0]}: {x[1]}", zip(vocab[id_sorted[:k]], igs_sorted))))
