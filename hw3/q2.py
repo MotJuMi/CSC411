@@ -122,12 +122,13 @@ def run_validation(x,y,taus,val_frac):
 
 if __name__ == "__main__":
     # In this excersice we fixed lambda (hard coded to 1e-5) and only set tau value. Feel free to play with lambda as well if you wish
-    taus = np.logspace(1,3,5)
+    taus = [1e-10, 1e-5, 1e-1, 1e2, 1e3, 1e10]
     n, m = 1000, 10
     x = np.random.randn(n, m)
     w_true = np.random.randn(x.shape[1] + 1,)
     y = np.concatenate([x, np.ones((n,1))], axis=1) @ w_true
     train_losses, test_losses = run_validation(x,y,taus,val_frac=0.3)
-    plt.plot(train_losses)
-    plt.plot(test_losses)
+    plt.semilogx(taus, train_losses, label="train")
+    plt.semilogx(taus, test_losses, label="test")
+    plt.legend()
     plt.show()
