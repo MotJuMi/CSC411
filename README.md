@@ -1,4 +1,6 @@
-# CSC411
+# CSC 411 Winter 2019
+# Machine Learning and Data Mining
+
 
 - Homework 1
     - - [x] Nearest Neighbours and the Curse of Dimensionality
