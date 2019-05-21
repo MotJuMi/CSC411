@@ -8,6 +8,7 @@ import data
 import numpy as np
 # Import pyplot - plt.imshow is useful!
 import matplotlib.pyplot as plt
+from scipy.special import logsumexp
 
 def compute_mean_mles(train_data, train_labels):
     '''
@@ -16,11 +17,13 @@ def compute_mean_mles(train_data, train_labels):
     Should return a numpy array of size (10,64)
     The ith row will correspond to the mean estimate for digit class i
     '''
-    means = np.zeros((10, 64))
+    n_classes, dim = len(np.unique(train_labels)), train_data.shape[1]
+    means = np.zeros((n_classes, dim))
     # Compute means
-    for k in range(len(means)):
+    for k in range(n_classes):
         class_mask = train_labels == k
-        means[k] = np.sum(train_data[class_mask], axis=0) / np.sum(class_mask, axis=0)
+        means[k] = np.sum(train_data[class_mask], axis=0) / \
+                   np.sum(class_mask, axis=0)
     return means
 
 def compute_sigma_mles(train_data, train_labels):
@@ -30,11 +33,12 @@ def compute_sigma_mles(train_data, train_labels):
     Should return a three dimensional numpy array of shape (10, 64, 64)
     consisting of a covariance matrix for each digit class 
     '''
-    covariances = np.zeros((10, 64, 64))
+    n_classes, dim = len(np.unique(train_labels)), train_data.shape[1]
+    covariances = np.zeros((n_classes, dim, dim))
     # Compute covariances
     means = compute_mean_mles(train_data, train_labels)
     eps = 0.01
-    for k in range(len(covariances)):
+    for k in range(n_classes):
         class_mask = train_labels == k
         A = train_data[class_mask] - means[k]
         A = A.T @ A
@@ -48,13 +52,14 @@ def generative_likelihood(digits, means, covariances):
 
     Should return an n x 10 numpy array 
     '''
-    log_p = np.zeros((10, len(digits)))
-    K, d = means.shape[0], means.shape[1]
-    for k in range(K):
+    n_classes, dim = means.shape
+    n_samples = len(digits)
+    log_p = np.zeros((n_classes, n_samples))
+    for k in range(n_classes):
         cov_det = np.linalg.det(covariances[k])
         x_mu = digits - means[k]
         power = -0.5 * ((x_mu @ np.linalg.inv(covariances[k])) * x_mu).sum(axis=1)
-        log_p[k] = (-d/2) * np.log(2 * np.pi) - 0.5 * np.log(cov_det) + power
+        log_p[k] = -0.5 * dim * np.log(2 * np.pi) - 0.5 * np.log(cov_det) + power
     return log_p.T
 
 def conditional_likelihood(digits, means, covariances):
@@ -66,12 +71,13 @@ def conditional_likelihood(digits, means, covariances):
     This should be a numpy array of shape (n, 10)
     Where n is the number of datapoints and 10 corresponds to each digit class
     '''
-    p_y = 0.1
+    n_classes = len(covariances)
+    logp_y = -np.log(n_classes)
     loglikelihood = generative_likelihood(digits, means, covariances)
-    numerator = loglikelihood + np.log(p_y)
-    denominator = np.sum()
+    numerator = loglikelihood + logp_y
+    denominator = logsumexp(numerator, axis=1).reshape(-1, 1)
 
-    return None
+    return numerator - denominator
 
 def avg_conditional_likelihood(digits, labels, means, covariances):
     '''
@@ -82,9 +88,11 @@ def avg_conditional_likelihood(digits, labels, means, covariances):
     i.e. the average log likelihood that the model assigns to the correct class label
     '''
     cond_likelihood = conditional_likelihood(digits, means, covariances)
+    avg_cond_likelihood = np.mean(np.choose(
+                                  labels.astype(np.int), cond_likelihood.T))
 
     # Compute as described above and return
-    return None
+    return avg_cond_likelihood
 
 def classify_data(digits, means, covariances):
     '''
@@ -92,7 +100,8 @@ def classify_data(digits, means, covariances):
     '''
     cond_likelihood = conditional_likelihood(digits, means, covariances)
     # Compute and return the most likely class
-    pass
+    predictions = np.argmax(cond_likelihood, axis=1)
+    return predictions
 
 def main():
     train_data, train_labels, test_data, test_labels = data.load_all_data('data')
@@ -102,6 +111,21 @@ def main():
     covariances = compute_sigma_mles(train_data, train_labels)
 
     # Evaluation
+    avg_ll_train = avg_conditional_likelihood(train_data, train_labels, 
+                                              means, covariances)
+    avg_ll_test = avg_conditional_likelihood(test_data, test_labels, 
+                                             means, covariances)
+    print(f"Average train log-ll: {avg_ll_train}")
+    print(f"Average train log-ll: {avg_ll_test}")
+
+    train_predictions = classify_data(train_data, means, covariances)
+    test_predictions = classify_data(test_data, means, covariances)
+    train_acc = (train_predictions == train_labels.astype(np.int)).sum() / \
+                len(train_labels)
+    test_acc = (test_predictions == test_labels.astype(np.int)).sum() / \
+               len(test_labels)
+    print(f"Train acc: {train_acc}")
+    print(f"Test acc: {test_acc}")
 
 if __name__ == '__main__':
     main()
