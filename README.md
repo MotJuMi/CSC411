@@ -14,3 +14,7 @@
 - [Homework 4](./hw4)
     - - [x] AlexNet
     - - [x] Gaussian Naı̈ve Bayes
+- [Homework 5](./hw4)
+    - - [x] Gaussian Discriminant Analysis
+    - - [ ] Categorial Distribution
+    - - [ ] Factor Analysis
