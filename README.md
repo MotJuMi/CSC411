@@ -18,3 +18,12 @@
     - - [x] Gaussian Discriminant Analysis
     - - [ ] Categorial Distribution
     - - [ ] Factor Analysis
+- Homework 6: Image Completion using Mixture of Bernoullis
+    - - [ ] Learning the parameters
+    - - [ ] Posterior inference 
+    - - [ ] Conceptual questions
+- Homework 7
+    - - [ ] Representer Theorem
+    - - [ ] Compositional Kernels
+- Homework 8
+    - - [ ] Spend or Save
