@@ -36,14 +36,24 @@ def compute_sigma_mles(train_data, train_labels):
     '''
     n_classes, dim = len(np.unique(train_labels)), train_data.shape[1]
     covariances = np.zeros((n_classes, dim, dim))
+    covariances_true = np.zeros((n_classes, dim, dim))
     # Compute covariances
     means = compute_mean_mles(train_data, train_labels)
-    eps = 0.01
+    eps = 0.1
     for k in range(n_classes):
         class_mask = train_labels == k
         A = train_data[class_mask] - means[k]
         A = A.T @ A
-        covariances[k] = (A + eps * np.eye(A.shape[0])) / class_mask.sum()
+        #covariances[k] = (A + eps * np.eye(A.shape[0])) / class_mask.sum()
+        #covariances[k] = covariances[k] + np.random.normal(size=A.shape)
+        covariances[k] = np.cov(train_data[class_mask].T)
+        non_zero_orig = np.count_nonzero(covariances[k])
+        covariances[k] = covariances[k] + eps * np.eye(A.shape[0])
+        non_zero_reg = np.count_nonzero(covariances[k])
+        print(f"Orig [{non_zero_orig}], Reg [{non_zero_reg}]")
+        #print(covariances[k])
+        #print(covariances_true[k])
+        #print(np.isclose(covariances[k], covariances_true[k], atol=1e-3).sum()/(covariances[k].shape[0] * covariances[k].shape[1]))
     return covariances
 
 def generative_likelihood(digits, means, covariances):
@@ -54,13 +64,21 @@ def generative_likelihood(digits, means, covariances):
     Should return an n x 10 numpy array 
     '''
     n_classes, dim = means.shape
+    print(dim)
     n_samples = len(digits)
     log_p = np.zeros((n_classes, n_samples))
     for k in range(n_classes):
-        cov_det = np.linalg.det(covariances[k])
+        #print(covariances[k])
+        #cov_det = np.linalg.det(covariances[k])
+        #log_cov_det = np.log(cov_det)
+        (sign, logdet) = np.linalg.slogdet(covariances[k])
+        #print(sign * np.exp(logdet))
+        log_cov_det = sign * logdet
         x_mu = digits - means[k]
+        #print(cov_det)
         power = -0.5 * ((x_mu @ np.linalg.inv(covariances[k])) * x_mu).sum(axis=1)
-        log_p[k] = -0.5 * dim * np.log(2 * np.pi) - 0.5 * np.log(cov_det) + power
+        log_p[k] = -0.5 * dim * np.log(2 * np.pi) - 0.5 * log_cov_det + power
+        #log_p[k] = - 0.5 * log_cov_det + power
     return log_p.T
 
 def conditional_likelihood(digits, means, covariances):
@@ -109,11 +127,21 @@ def main():
     train_data, train_labels, test_data, test_labels = \
         mnist.train_images(), mnist.train_labels(), \
         mnist.test_images(), mnist.test_labels()
-    train_data = np.around(train_data.reshape(train_data.shape[0], -1) / 255, 2)
-    test_data = np.around(test_data.reshape(test_data.shape[0], -1) / 255, 2)
+    #train_data = np.around(train_data.reshape(train_data.shape[0], -1) / 255, 2)
+    #test_data = np.around(test_data.reshape(test_data.shape[0], -1) / 255, 2)
+    train_data = train_data.reshape(train_data.shape[0], -1)
+    test_data = test_data.reshape(test_data.shape[0], -1)
     # Fit the model
     means = compute_mean_mles(train_data, train_labels)
     covariances = compute_sigma_mles(train_data, train_labels)
+
+    eigs = [np.linalg.eig(cov) for cov in covariances]
+    largest_ids = np.argmax([x[0] for x in eigs], axis=1)
+    largest_eigs = [eigs[i][1][:, k] for i, k in enumerate(largest_ids)]
+    for i, eig in enumerate(largest_eigs):
+        plt.imshow(eig.reshape(28, 28).astype(np.float))
+        plt.savefig(f"eigenvalues/{i}.png")
+        plt.show()
 
     # Evaluation
     avg_ll_train = avg_conditional_likelihood(train_data, train_labels, 
@@ -131,13 +159,6 @@ def main():
                len(test_labels)
     print(f"Train acc: {train_acc}")
     print(f"Test acc: {test_acc}")
-
-    eigs = [np.linalg.eig(cov) for cov in covariances]
-    largest_ids = np.argmax([x[0] for x in eigs], axis=1)
-    largest_eigs = [eigs[i][1][:, k] for i, k in enumerate(largest_ids)]
-    for eig in largest_eigs:
-        plt.imshow(eig.reshape(28, 28))
-        plt.show()
 
 if __name__ == '__main__':
     main()
