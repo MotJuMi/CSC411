@@ -9,6 +9,7 @@ import numpy as np
 # Import pyplot - plt.imshow is useful!
 import matplotlib.pyplot as plt
 from scipy.special import logsumexp
+import mnist
 
 def compute_mean_mles(train_data, train_labels):
     '''
@@ -104,8 +105,12 @@ def classify_data(digits, means, covariances):
     return predictions
 
 def main():
-    train_data, train_labels, test_data, test_labels = data.load_all_data('data')
-
+    #train_data, train_labels, test_data, test_labels = data.load_all_data('data')
+    train_data, train_labels, test_data, test_labels = \
+        mnist.train_images(), mnist.train_labels(), \
+        mnist.test_images(), mnist.test_labels()
+    train_data = np.around(train_data.reshape(train_data.shape[0], -1) / 255, 2)
+    test_data = np.around(test_data.reshape(test_data.shape[0], -1) / 255, 2)
     # Fit the model
     means = compute_mean_mles(train_data, train_labels)
     covariances = compute_sigma_mles(train_data, train_labels)
@@ -131,7 +136,7 @@ def main():
     largest_ids = np.argmax([x[0] for x in eigs], axis=1)
     largest_eigs = [eigs[i][1][:, k] for i, k in enumerate(largest_ids)]
     for eig in largest_eigs:
-        plt.imshow(eig.reshape(8, 8))
+        plt.imshow(eig.reshape(28, 28))
         plt.show()
 
 if __name__ == '__main__':
