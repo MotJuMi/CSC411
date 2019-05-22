@@ -44,16 +44,7 @@ def compute_sigma_mles(train_data, train_labels):
         class_mask = train_labels == k
         A = train_data[class_mask] - means[k]
         A = A.T @ A
-        #covariances[k] = (A + eps * np.eye(A.shape[0])) / class_mask.sum()
-        #covariances[k] = covariances[k] + np.random.normal(size=A.shape)
-        covariances[k] = np.cov(train_data[class_mask].T)
-        non_zero_orig = np.count_nonzero(covariances[k])
-        covariances[k] = covariances[k] + eps * np.eye(A.shape[0])
-        non_zero_reg = np.count_nonzero(covariances[k])
-        print(f"Orig [{non_zero_orig}], Reg [{non_zero_reg}]")
-        #print(covariances[k])
-        #print(covariances_true[k])
-        #print(np.isclose(covariances[k], covariances_true[k], atol=1e-3).sum()/(covariances[k].shape[0] * covariances[k].shape[1]))
+        covariances[k] = A / class_mask.sum() + eps * np.eye(A.shape[0])
     return covariances
 
 def generative_likelihood(digits, means, covariances):
@@ -68,17 +59,11 @@ def generative_likelihood(digits, means, covariances):
     n_samples = len(digits)
     log_p = np.zeros((n_classes, n_samples))
     for k in range(n_classes):
-        #print(covariances[k])
-        #cov_det = np.linalg.det(covariances[k])
-        #log_cov_det = np.log(cov_det)
         (sign, logdet) = np.linalg.slogdet(covariances[k])
-        #print(sign * np.exp(logdet))
         log_cov_det = sign * logdet
         x_mu = digits - means[k]
-        #print(cov_det)
         power = -0.5 * ((x_mu @ np.linalg.inv(covariances[k])) * x_mu).sum(axis=1)
         log_p[k] = -0.5 * dim * np.log(2 * np.pi) - 0.5 * log_cov_det + power
-        #log_p[k] = - 0.5 * log_cov_det + power
     return log_p.T
 
 def conditional_likelihood(digits, means, covariances):
