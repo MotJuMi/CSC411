@@ -127,5 +127,12 @@ def main():
     print(f"Train acc: {train_acc}")
     print(f"Test acc: {test_acc}")
 
+    eigs = [np.linalg.eig(cov) for cov in covariances]
+    largest_ids = np.argmax([x[0] for x in eigs], axis=1)
+    largest_eigs = [eigs[i][1][:, k] for i, k in enumerate(largest_ids)]
+    for eig in largest_eigs:
+        plt.imshow(eig.reshape(8, 8))
+        plt.show()
+
 if __name__ == '__main__':
     main()
