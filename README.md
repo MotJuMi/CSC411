@@ -16,7 +16,7 @@
     - - [x] Gaussian Naı̈ve Bayes
 - [Homework 5](./hw5)
     - - [x] Gaussian Discriminant Analysis
-    - - [ ] Categorial Distribution
+    - - [ ] Categorical Distribution
     - - [ ] Factor Analysis
 - Homework 6: Image Completion using Mixture of Bernoullis
     - - [ ] Learning the parameters
