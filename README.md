@@ -25,5 +25,9 @@
 - Homework 7
     - - [ ] Representer Theorem
     - - [ ] Compositional Kernels
-- Homework 8
-    - - [ ] Spend or Save
+- Homework 8: Spend or Save
+    - - [x] 1
+    - - [x] 2
+    - - [x] 3
+    - - [x] 4
+    - - [ ] 5
